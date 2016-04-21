@@ -38,10 +38,10 @@ Add a new handler to implement your API. You can turn this scheduler into an API
 
 You can add authorization to GSS to active this functionality. Assume your user verifying package is called "user", then you can build functions like the following and change the code in routes.go to support websocket.
 
-```golang
+```go
 func GetUser(userTok string) *jsonwrapper.Object {
 
-	obj, err := sellyxrequest.JsonHttpRequest("GET", "auth.sellyx.com", "/auth/validate", "key="+userTok, "")
+	obj, err := sellyxrequest.JsonHttpRequest("GET", "auth.example.com", "/auth/validate", "key="+userTok, "")
 
 	if err != nil || !obj.Success {
 		return nil

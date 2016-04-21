@@ -2,6 +2,49 @@
 
 GSS is a distributed scheduling service helping you to publish multiple types of messages across regions without runtime delays. This project is still under development. The current version is 0.2.5.
 
+### Usage
+
+#### Get The Code
+
+Clone or download the code from github and unzip (if necessary)
+
+#### Install GO
+
+Please make sure you have already installed Go compiler to your computer. Either gccGo or cgo will work.
+Check [Go Installation Intructions](https://golang.org/doc/install) for more details.
+
+#### Set Environment Variables
+
+For windows, go to environment path manager and set add GOPATH to your path to GSS.
+For Linux/Mac, set the environment variables in terminal:
+```bash
+export GOPATH=/path/to/GSS
+```
+You can also add the above to your bashrc file or profile file (Linux and Mac)
+
+#### Compile
+
+1. cd to your path to GSS in your terminal.
+2. Type the following to compile GSS:
+```bash
+go build -o gss server.go routes.go
+```
+
+#### Verify Compilation
+
+```bash
+./gss -v
+```
+Current version number will be printed if you have successfully compiled GSS.
+
+#### Run GSS
+
+```bash
+./gss
+```
+If you prefer, you can add a link to your system's bin folder.
+
+
 ### Update Notes
 
 #### 0.2.6 (working)

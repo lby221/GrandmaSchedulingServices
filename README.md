@@ -84,7 +84,7 @@ You can add authorization to GSS to active this functionality. Assume your user 
 ```go
 func GetUser(userTok string) *jsonwrapper.Object {
 
-	obj, err := sellyxrequest.JsonHttpRequest("GET", "auth.example.com", "/auth/validate", "key="+userTok, "")
+	obj, err := request.JsonHttpRequest("GET", "auth.example.com", "/auth/validate", "key="+userTok, "")
 
 	if err != nil || !obj.Success {
 		return nil

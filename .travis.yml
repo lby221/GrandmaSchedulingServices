@@ -9,5 +9,8 @@ go:
   - tip
   - release
 
+before_install:
+  - export GOPATH=$HOME/gopath/src/github.com/lby221/GrandmaSchedulingServices/
+
 install:
   - go build server.go routes.go

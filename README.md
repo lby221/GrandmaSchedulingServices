@@ -106,7 +106,7 @@ Feel free to add more options to config.
 
 To verify the source of the caller and keep the API secure, GSS uses a REST based signature authentication (Currently GSS doesn't support authentication using OAuth by default, you can feel free to modify routes.go to support your own way to do authorization). To finish the authorization process, please refer to the following steps:
 
-1. Set up REST secret in both your caller project and grandma.conf.
+1. Set up REST secret in both your caller project and grandma.conf
 
 	grandma.conf:
 	```json
@@ -117,7 +117,7 @@ To verify the source of the caller and keep the API secure, GSS uses a REST base
 	}
 	```
 
-2. Build string to sign in your caller program based on your request.
+2. Build string to sign in your caller program based on your request
 
 	You should build your string to sign according to this format:
 	```
@@ -131,7 +131,7 @@ To verify the source of the caller and keep the API secure, GSS uses a REST base
 	```
 	Note: In some cases, double qoute should be represented as its escape ```'\"'```
 
-3. Sign your string to sign. 
+3. Sign your string to sign
 
 	Generate the signature using HMAC-SHA256 with the REST secret you set in grandma.conf. The output signature's encoding method should be set to hex string.
 
@@ -139,7 +139,7 @@ To verify the source of the caller and keep the API secure, GSS uses a REST base
 	```javascript
 	var hash = crypto.createHmac('sha256', rest_secret).update(string_to_sign).digest('hex');
 
-```
+	```
 
 4. Turn your hex string into Base64 and delete all equal signs
 
@@ -148,7 +148,7 @@ To verify the source of the caller and keep the API secure, GSS uses a REST base
 	MTRmODFlZWMwZTk2NDVhNDUzYzM5NmIzNjkwN2FiODgxMDlhY2IzY2NhNDMwNmMyODBiMmI3NjM1NWY2MmVjMg
 	```
 
-5. Build your request URL.
+5. Build your request URL
 
 	Your request url should be of following format:
 	```

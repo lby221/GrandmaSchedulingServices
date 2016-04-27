@@ -50,6 +50,7 @@ If you prefer, you can add a link to your system's bin folder.
 #### 0.2.6 (working)
 
 1. Added config settings for queues, rest call signatures and messages.
+2. Support big data distributions with third party software execution in cluster.
 
 #### 0.2.5 (current)
 

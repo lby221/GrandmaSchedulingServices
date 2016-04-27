@@ -3,17 +3,23 @@ package clustering
 import (
 	"conf"
 	"fmt"
+	"io"
 	"message"
 	"net"
 	"sync"
 )
 
 func DistCalls(msg *message.Obj) (int, error) {
+
 	if msg.MessageType != 105 {
 		return distLevel1Calls(msg)
 	} else {
 		return distLevel2Calls(msg)
 	}
+}
+
+func DistBigDataCalls(content io.Reader) (int, error) {
+	return distBigDataCalls(content)
 }
 
 func Network() (bool, *net.TCPConn) {

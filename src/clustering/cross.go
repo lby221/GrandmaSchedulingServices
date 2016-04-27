@@ -12,27 +12,43 @@ import (
 const (
 	COMM_TYPE_ACKNOWLEDGED = 155
 	COMM_TYPE_FAILED       = 156
+
+	REGION_STATUS_OK       = 130
+	REGION_STATUS_DOWN     = 131
+	REGION_STATUS_UNSTABLE = 132
 )
 
-var cross_queue []*queue.GrandmaQueue
+var cross_nodes []*Region
 
 type Region struct {
-	url string
+	Url          string
+	Status       byte
+	SendingQueue *queue.GrandmaQueue
 }
 
 func init() {
 	region_list := conf.GetRegionList()
 
 	if region_list == nil {
-		cross_queue = nil
+		cross_nodes = nil
 		return
 	}
 
-	cross_queue = make([]*queue.GrandmaQueue, region_list.Len())
+	cross_nodes = make([]*queue.GrandmaQueue, region_list.Len())
 
-	for i := 0; i < len(cross_queue); i++ {
-		cross_queue[i] = queue.NewQueue()
+	index := 0
+	for e := region_list.Front(); e != nil; e = e.Next() {
+		region := new(Region)
+		region.SendingQueue = queue.NewQueue()
+		region.Status = REGION_STATUS_OK
+		region.Url = e.Value()
+		cross_nodes[index] = region
 	}
+}
+
+// Distribution message mapping
+func preprocessMapping(config []byte) {
+
 }
 
 func pushToCross(msg *message.Obj) {

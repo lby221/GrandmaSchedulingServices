@@ -10,4 +10,4 @@ go:
   - release
 
 script:
-  go run server.go routes.go
+  - go build server.go routes.go

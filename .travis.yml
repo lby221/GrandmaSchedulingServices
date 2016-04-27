@@ -9,5 +9,5 @@ go:
   - tip
   - release
 
-script:
+install:
   - go build server.go routes.go

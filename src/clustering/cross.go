@@ -1,5 +1,6 @@
 package clustering
 
+/*
 import (
 	"bytes"
 	"conf"
@@ -97,3 +98,4 @@ func executeCrossQueue() {
 		break
 	}
 }
+*/

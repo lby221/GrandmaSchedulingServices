@@ -10,7 +10,7 @@ import (
 	"message"
 	"net/http"
 	"signature"
-	"ws"
+	// "ws"
 	//"./users"     // According to your OAuth settings
 )
 
@@ -81,7 +81,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	to_compare := singature.VToken("POST", time, string(body))
+	to_compare := signature.VToken("POST", time, string(body))
 	//to_compare = "test"
 
 	if token != to_compare {

@@ -3,6 +3,7 @@ package clustering
 import (
 	"container/heap"
 	"errors"
+	"io"
 	"log"
 	"message"
 	"schedule"
@@ -135,6 +136,6 @@ func distLevel2Calls(msg *message.Obj) (int, error) {
 	return s.Id, err
 }
 
-func distBigDataCalls(msg string) (int, error) {
-
+func distBigDataCalls(content io.Reader) (int, error) {
+	return -1, nil
 }

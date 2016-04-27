@@ -1,5 +1,6 @@
 package clustering
 
+/*
 import (
 	"conf"
 	"net/http"
@@ -36,3 +37,4 @@ func sendCross(msg, url string, msg_type int) error {
 
 	return nil
 }
+*/

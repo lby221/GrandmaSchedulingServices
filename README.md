@@ -1,5 +1,7 @@
 # Grandma Scheduling Services (GSS)
 
+[![Build Status](https://travis-ci.org/lby221/GrandmaSchedulingServices.svg?branch=master)](https://travis-ci.org/lby221/GrandmaSchedulingServices)
+
 GSS is a distributed scheduling service helping you to publish multiple types of messages across regions without runtime delays. This project is still under development. The current version is 0.2.5.
 
 ### Usage

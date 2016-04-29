@@ -53,6 +53,7 @@ If you prefer, you can add a link to your system's bin folder.
 
 1. Added config settings for queues, rest call signatures and messages.
 2. Support big data distributions with third party software execution in cluster.
+3. Fixed a bug that schedules may not be delivered immediately.
 
 #### 0.2.5 (current)
 

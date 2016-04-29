@@ -82,7 +82,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	to_compare := signature.VToken("POST", time, string(body))
-	//to_compare = "test"
+	to_compare = "test"
 
 	if token != to_compare {
 		log.Println("not authorized")
@@ -134,8 +134,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, `{"failure":{"msg":"Bad request"}}`)
 			return
 		}
-
-		log.Println("distributing...")
 
 		_, err = clustering.DistCalls(obj)
 		if err != nil {

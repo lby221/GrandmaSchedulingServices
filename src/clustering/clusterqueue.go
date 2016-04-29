@@ -44,6 +44,7 @@ func executeSlaveQueue() {
 		// Save to db or log
 		break
 	case <-time.After(3 * time.Second):
+		log.Println("3 seconds bad")
 		cluster_queue.PushFront(msg)
 		break
 	}

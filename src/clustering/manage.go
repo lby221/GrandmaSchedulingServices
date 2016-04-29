@@ -62,8 +62,8 @@ func (nq NodeQueue) Pop() interface{} {
 func (n *Node) update(complexity uint, position int) {
 	RWLock.Lock()
 	n.complexity = complexity
-	RWLock.Unlock()
 	heap.Fix(slave_connections, position)
+	RWLock.Unlock()
 }
 
 func createComplexityRanking() {
@@ -73,16 +73,6 @@ func createComplexityRanking() {
 func distLevel1Calls(msg *message.Obj, node_index ...int) (int, error) {
 	var node *Node = nil
 	var index int = 0
-
-	if len(node_index) > 0 {
-		index = node_index[0]
-	}
-
-	if slave_connections.Len() > index {
-		RWLock.RLock()
-		node = slave_connections[index]
-		RWLock.RUnlock()
-	}
 
 	log.Printf("Distribute level 1 at slave %d with address %s", index, node)
 	master_complexity := master_connection.complexity

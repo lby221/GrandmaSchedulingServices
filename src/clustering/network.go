@@ -472,129 +472,107 @@ func handshakeSlave(conn *net.TCPConn) int8 {
 
 }
 
-func readData(node *Node) <-chan uint {
-	out := make(chan uint, 1)
-	go func() {
-		temp_buffer := make([]byte, 4096)
-		var size int = 0
-		var err error = nil
+func readData(node *Node) uint {
+	if node == nil || node.conn == nil {
+		return 0
+	}
 
-		if node.level_2_buffer_size > 1 {
-			// Data available in level 2 buffer
-			append_buffer(temp_buffer, node.level_2_buffer, 0, 0, node.level_2_buffer_size)
-			size = node.level_2_buffer_size
-			// Clear level 2 buffer
-			node.level_2_buffer_size = 0
-		} else if node.level_2_buffer_size == 1 {
-			// Partial data available in level 2 buffer
-			append_buffer(temp_buffer, node.level_2_buffer, 0, 0, node.level_2_buffer_size)
-			size = node.level_2_buffer_size
-			// Clear level 2 buffer
-			node.level_2_buffer_size = 0
-			// Continue reading data
-			if node == nil || node.conn == nil {
-				out <- 0
-				close(out)
-				return
-			}
-			size, err = node.conn.Read(temp_buffer[1:])
-			if err != nil {
-				out <- 0
-				close(out)
-				return
-			}
+	temp_buffer := make([]byte, 4096)
+	var size int = 0
+	var err error = nil
 
-			size = size + 1
+	if node.level_2_buffer_size > 1 {
+		// Data available in level 2 buffer
+		append_buffer(temp_buffer, node.level_2_buffer, 0, 0, node.level_2_buffer_size)
+		size = node.level_2_buffer_size
+		// Clear level 2 buffer
+		node.level_2_buffer_size = 0
+	} else if node.level_2_buffer_size == 1 {
+		// Partial data available in level 2 buffer
+		append_buffer(temp_buffer, node.level_2_buffer, 0, 0, node.level_2_buffer_size)
+		size = node.level_2_buffer_size
+		// Clear level 2 buffer
+		node.level_2_buffer_size = 0
+		// Continue reading data
+		size, err = node.conn.Read(temp_buffer[1:])
+		if err != nil {
+			return 0
+		}
+
+		size = size + 1
+	} else {
+		// No level 2 buffer data available, read directly from socket
+		if node.conn == nil {
+			return 0
+		}
+		size, err = node.conn.Read(temp_buffer)
+		if err != nil {
+			return 0
+		}
+	}
+
+	sofar := size - 2
+	// bufferLock := node.bufferLock
+
+	// log.Println("Reading data in progress...")
+	// Consume all bytes in temp_buffer before continue
+	// Read first 2 bytes and get message size
+	var msg_size int16 = 0
+	msg_size = ((msg_size | int16(temp_buffer[0])) << 8) | int16(temp_buffer[1])
+	var msg_size_int int = int(msg_size)
+	// log.Printf("Size of data: %d", size-2)
+	// log.Printf("Size of message: %d", msg_size_int)
+	if msg_size_int < 0 {
+		return 0
+	}
+	// Copy rest to buffer
+	if msg_size_int <= size-2 {
+		// bufferLock.Lock()
+		append_buffer(node.read_buffer, temp_buffer, 0, 2, msg_size_int)
+		append_buffer(node.level_2_buffer, temp_buffer, 0, msg_size_int+2, size-2-msg_size_int)
+		node.level_2_buffer_size = size - 2 - msg_size_int
+		// bufferLock.Unlock()
+		return uint(msg_size_int)
+	}
+	// bufferLock.Lock()
+	append_buffer(node.read_buffer, temp_buffer, 0, 2, size-2)
+	// bufferLock.Unlock()
+
+	for {
+		log.Println("Long data to read")
+
+		bytes_to_read := msg_size_int - sofar
+
+		if node.conn == nil {
+			return 0
+		}
+		size, err = node.conn.Read(temp_buffer)
+		if err != nil {
+			return 0
+		}
+
+		current := sofar + size
+		if current >= msg_size_int {
+			// Save rest to level 2 buffer
+
+			// bufferLock.Lock()
+			append_buffer(node.level_2_buffer, temp_buffer, 0, bytes_to_read, current-msg_size_int)
+			node.level_2_buffer_size = current - msg_size_int
+			// Save data for this packet to buffer
+			append_buffer(node.read_buffer, temp_buffer, sofar, 0, bytes_to_read)
+			// bufferLock.Unlock()
+			sofar = msg_size_int
+			break
 		} else {
-			// No level 2 buffer data available, read directly from socket
-			if node == nil || node.conn == nil {
-				out <- 0
-				close(out)
-				return
-			}
-			size, err = node.conn.Read(temp_buffer)
-			if err != nil {
-				out <- 0
-				close(out)
-				return
-			}
+			// Append message if more in buffer
+			// bufferLock.Lock()
+			append_buffer(node.read_buffer, temp_buffer, sofar, 0, size)
+			// bufferLock.Unlock()
+			sofar = current
 		}
+	}
 
-		sofar := size - 2
-		bufferLock := node.bufferLock
-
-		// log.Println("Reading data in progress...")
-		// Consume all bytes in temp_buffer before continue
-		// Read first 2 bytes and get message size
-		var msg_size int16 = 0
-		msg_size = ((msg_size | int16(temp_buffer[0])) << 8) | int16(temp_buffer[1])
-		var msg_size_int int = int(msg_size)
-		// log.Printf("Size of data: %d", size-2)
-		// log.Printf("Size of message: %d", msg_size_int)
-		if msg_size_int < 0 {
-			out <- 0
-			close(out)
-			return
-		}
-		// Copy rest to buffer
-		if msg_size_int <= size-2 {
-			bufferLock.Lock()
-			append_buffer(node.read_buffer, temp_buffer, 0, 2, msg_size_int)
-			append_buffer(node.level_2_buffer, temp_buffer, 0, msg_size_int+2, size-2-msg_size_int)
-			out <- uint(msg_size_int)
-			close(out)
-			bufferLock.Unlock()
-			return
-		}
-		bufferLock.Lock()
-		append_buffer(node.read_buffer, temp_buffer, 0, 2, size-2)
-		bufferLock.Unlock()
-
-		for {
-			log.Println("Long data to read")
-
-			bytes_to_read := msg_size_int - sofar
-
-			if node == nil || node.conn == nil {
-				out <- 0
-				close(out)
-				return
-			}
-			size, err = node.conn.Read(temp_buffer)
-			if err != nil {
-				out <- 0
-				close(out)
-				return
-			}
-
-			current := sofar + size
-			if current >= msg_size_int {
-				log.Printf("Current position: %d, message size: %d", current, msg_size_int)
-				// Save rest to level 2 buffer
-				log.Printf("level 2 starting point: %d, to copy size: %d", bytes_to_read, current-msg_size_int)
-
-				bufferLock.Lock()
-				append_buffer(node.level_2_buffer, temp_buffer, 0, bytes_to_read, current-msg_size_int)
-				node.level_2_buffer_size = current - msg_size_int
-				// Save data for this packet to buffer
-				append_buffer(node.read_buffer, temp_buffer, sofar, 0, bytes_to_read)
-				bufferLock.Unlock()
-				sofar = msg_size_int
-				break
-			} else {
-				// Append message if more in buffer
-				bufferLock.Lock()
-				append_buffer(node.read_buffer, temp_buffer, sofar, 0, size)
-				bufferLock.Unlock()
-				sofar = current
-			}
-		}
-
-		out <- uint(sofar)
-
-		close(out)
-	}()
-	return out
+	return uint(sofar)
 }
 
 func readHandshakeData(conn *net.TCPConn, buffer []byte) <-chan uint {
@@ -633,9 +611,9 @@ func readAndCheckTimeOut(conn *net.TCPConn) (int8, []byte) {
 }
 
 func sendSlave(data []byte, slave_num int) (*Node, error) {
-	RWLock.Lock()
+	RWLock.RLock()
 	slave := slave_connections[slave_num]
-	RWLock.Unlock()
+	RWLock.RUnlock()
 
 	if slave.closed {
 		return slave, nil
@@ -703,32 +681,32 @@ func disconnectMaster() {
 func masterHandler(data []byte, node *Node) {
 	buffer := bytes.NewReader(data)
 
-	for buffer.Len() > 0 {
-		data_type, err := buffer.ReadByte()
+	data_type, err := buffer.ReadByte()
 
+	if err != nil {
+		log.Println("Read byte error")
+		return
+	}
+
+	switch data_type {
+	case COMM_TYPE_CONSUMED:
+		log.Println("slave job comsumed")
+		var schedule_id int32
+		err := binary.Read(buffer, binary.LittleEndian, &schedule_id)
 		if err != nil {
+			log.Println("Error reading schedule id")
 			return
 		}
-
-		switch data_type {
-		case COMM_TYPE_CONSUMED:
-			log.Println("slave job comsumed")
-			var schedule_id int32
-			err := binary.Read(buffer, binary.LittleEndian, &schedule_id)
-			if err != nil {
-				log.Println("Error reading schedule id")
-				return
-			}
-			node.channel <- int(schedule_id)
-			break
-		case COMM_TYPE_FINISHED:
-			log.Println("slave job finished")
-			node.update(node.complexity-3, 0)
-			break
-		case COMM_TYPE_HEARTBEAT:
-			break
-		}
-
+		node.channel <- int(schedule_id)
+		break
+	case COMM_TYPE_FINISHED:
+		log.Println("slave job finished")
+		node.update(node.complexity-3, node.index)
+		break
+	case COMM_TYPE_HEARTBEAT:
+		break
+	default:
+		log.Println("unknown type")
 	}
 }
 
@@ -742,7 +720,7 @@ func slaveHandler(data []byte) {
 
 	switch data_type {
 	case COMM_TYPE_SCHEDULE:
-		log.Println("received from master")
+		log.Println("received from master fc")
 		byte_data := make([]byte, buffer.Len())
 		buffer.Read(byte_data)
 		consumeLevel1Calls(byte_data)
@@ -755,36 +733,34 @@ func slaveHandler(data []byte) {
 func startLoopListener() {
 	var nslaves int = len(slave_connections)
 	log.Println(nslaves)
+
 	for i := 0; i < nslaves; i++ {
-		current := i
-		go func() {
-			RWLock.RLock()
-			node := slave_connections[current]
-			RWLock.RUnlock()
+		node := slave_connections[i]
+		go func(n *Node) {
 			for {
-				size := <-readData(node)
+				size := readData(n)
 				if size > 0 {
-					node.bufferLock.RLock()
+					log.Println(size)
+					// node.bufferLock.RLock()
 					data := make([]byte, size)
-					copy(data, node.read_buffer)
-					node.bufferLock.RUnlock()
-					go masterHandler(data, node)
+					copy(data, n.read_buffer)
+					go masterHandler(data, n)
 				}
 			}
-		}()
+		}(node)
 	}
 }
 
 func startPointListener() {
 	go func() {
 		for {
-			size := <-readData(master_connection)
+			size := readData(master_connection)
 			if size > 0 {
 				data := make([]byte, size)
-				master_connection.bufferLock.RLock()
+				// master_connection.bufferLock.RLock()
 				copy(data, master_connection.read_buffer)
-				master_connection.bufferLock.RUnlock()
-				slaveHandler(data)
+				// master_connection.bufferLock.Unlock()
+				go slaveHandler(data)
 			}
 		}
 	}()

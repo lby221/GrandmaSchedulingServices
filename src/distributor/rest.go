@@ -3,7 +3,7 @@ package distributor
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	// "io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -47,9 +47,9 @@ func sendRESTCall(endpoint string, msg string) error {
 	}
 
 	defer response.Body.Close()
-	body, _ := ioutil.ReadAll(response.Body)
+	// body, _ := ioutil.ReadAll(response.Body)
 
-	log.Println(string(body))
+	// log.Println(string(body))
 
 	if response.StatusCode != 200 {
 		return ErrorInproperResponse

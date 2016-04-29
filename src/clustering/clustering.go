@@ -4,13 +4,14 @@ import (
 	"conf"
 	"fmt"
 	"io"
+	"log"
 	"message"
 	"net"
 	"sync"
 )
 
 func DistCalls(msg *message.Obj) (int, error) {
-
+	log.Println("distributing...")
 	if msg.MessageType != 105 {
 		return distLevel1Calls(msg)
 	} else {

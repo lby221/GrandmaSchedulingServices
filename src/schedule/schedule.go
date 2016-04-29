@@ -1,7 +1,6 @@
 package schedule
 
 import (
-	"bytes"
 	"conf"
 	"encoding/binary"
 	"errors"
@@ -57,27 +56,39 @@ func ChangeConnection(c *net.TCPConn) {
 }
 
 func reportSchedule() {
-	if tcp == nil {
-		return
-	}
+	msg_size_header := make([]byte, 2)
+	binary.BigEndian.PutUint16(msg_size_header, uint16(1))
 
 	tcplock.Lock()
-	tcp.Write([]byte{0, 1})
-	tcp.Write([]byte{COMM_TYPE_FINISHED})
+	_, err := tcp.Write(msg_size_header)
+	_, err = tcp.Write([]byte{COMM_TYPE_FINISHED})
 	tcplock.Unlock()
+
+	if err != nil {
+		log.Println("failed sending msg")
+	}
+
 	log.Println("reported result")
 }
 
 func consumeSchedule(id int32) {
-	buffer := new(bytes.Buffer)
-	buffer.WriteByte(COMM_TYPE_CONSUMED)
-	err := binary.Write(buffer, binary.LittleEndian, id)
-	if err != nil {
-		log.Println(err)
+	buffer := make([]byte, 4)
+	binary.LittleEndian.PutUint32(buffer, uint32(id))
+
+	to_send := make([]byte, 5)
+	to_send[0] = COMM_TYPE_CONSUMED
+
+	for i := 0; i < 4; i++ {
+		to_send[i+1] = buffer[i]
 	}
 
-	tcp.Write([]byte{0, 5})
-	tcp.Write(buffer.Bytes())
+	msg_size_header := make([]byte, 2)
+	binary.BigEndian.PutUint16(msg_size_header, uint16(5))
+	tcplock.Lock()
+	tcp.Write(msg_size_header)
+	tcp.Write(to_send)
+	tcplock.Unlock()
+	log.Println("reported consume")
 }
 
 func recoverSchedule() error {

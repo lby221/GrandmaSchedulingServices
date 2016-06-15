@@ -16,7 +16,7 @@ func sendGCMCall(msg *string) error {
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "key=AIzaSyBlVj5R-Mhj5NdbgUf-CPUBkiaY0qahG7M")
+	req.Header.Add("Authorization", "key")
 	req.Header.Add("Powered-By", "GrandmaSchedulerServices")
 
 	client := &http.Client{}
